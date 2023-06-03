@@ -1,0 +1,9 @@
+module Rubac
+  class Tuple
+    attr_reader object: String
+    attr_reader relation: String
+    attr_reader user: User
+
+    def is_direct_match?: (TupleKey) -> bool
+  end
+end

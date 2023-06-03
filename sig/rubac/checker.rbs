@@ -1,0 +1,9 @@
+module Rubac
+  class Checker
+    @objects: Array[String]
+    @tuples: Array[Hash[String, String]]
+    @users: Array[String]
+
+    def check?: -> bool
+  end
+end

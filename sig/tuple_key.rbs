@@ -1,0 +1,5 @@
+class TupleKey
+  attr_accessor object: String
+  attr_accessor relation: String
+  attr_accessor user: String
+end

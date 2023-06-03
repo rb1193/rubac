@@ -1,0 +1,7 @@
+module Rubac
+  class TupleKey
+    @object: String
+    @relation: String
+    @user: String
+  end
+end
