@@ -10,7 +10,6 @@ module Rubac
     def check? (tuple_key)
       object_relations = @schema[tuple_key.object_type.to_sym]
 
-      # Get all tuples that match the object via relationships
       matches = []
       relation = object_relations[tuple_key.relation.to_sym]
 
@@ -40,12 +39,12 @@ module Rubac
     end
 
     def read(object, relation, collected_tuples = [])
-      # Find tuples that match the latest key object
+      # Find tuples that match the object and relation provided
       new_matches = @tuples.filter do |tuple|
         tuple.object == object && (relation.nil? || tuple.relation == relation)
       end
 
-      # For each new match, investigate the tuples to see whether there are potential further matches
+      # For each new match, check for further matches
       new_matches.each do |tuple|
         read(
           tuple.user.qualified_id,
