@@ -1,0 +1,6 @@
+module Rubac
+  class TupleToUserset
+    attr_reader relation: String
+    attr_reader computed_userset: ComputedUserset
+  end
+end

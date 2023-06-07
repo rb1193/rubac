@@ -7,6 +7,7 @@ module Rubac
       @schema = schema
     end
 
+    # To do: implement intersection and exclusion operations
     def check? (tuple_key)
       object_relations = @schema[tuple_key.object_type.to_sym]
 
@@ -20,11 +21,11 @@ module Rubac
           relation[:userset_rewrite][:union].each do |child|
             if child == :this
               matches.concat read tuple_key.object, tuple_key.relation
-            elsif child.include? :computed_userset
-              object_matches = read tuple_key.object, child[:relation]
-              object_matches.each { |tuple| matches.concat read(tuple.object, tuple.relation) }
-            else
-              matches.concat read tuple_key.object, child[:relation]
+            elsif child.instance_of? ComputedUserset
+              matches.concat read tuple_key.object, child.relation
+            elsif child.instance_of? TupleToUserset
+              object_matches = read tuple_key.object, child.relation
+              object_matches.each { |tuple| matches.concat read(tuple.object, child.computed_userset.relation) }
             end
           end
         elsif relation[:userset_rewrite].include? :intersection

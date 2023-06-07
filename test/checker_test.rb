@@ -80,12 +80,8 @@ class CheckerTest < Minitest::Test
             userset_rewrite: {
               union: [
                 :this,
-                {
-                  relation: "member"
-                },
-                {
-                  relation: "admin"
-                }
+                Rubac::ComputedUserset.new("member"),
+                Rubac::ComputedUserset.new("admin")
               ]
             }
           },
@@ -93,9 +89,7 @@ class CheckerTest < Minitest::Test
             userset_rewrite: {
               union: [
                 :this,
-                {
-                  relation: "admin"
-                }
+                Rubac::ComputedUserset.new("admin")
               ]
             }
           }
@@ -158,12 +152,7 @@ class CheckerTest < Minitest::Test
           userset_rewrite: {
             union: [
               :this,
-              {
-                relation: "parent",
-                computed_userset: {
-                  relation: "editor"
-                }
-              }
+              Rubac::TupleToUserset.new("parent", Rubac::ComputedUserset.new("editor"))
             ]
           }
         }
@@ -205,12 +194,7 @@ class CheckerTest < Minitest::Test
           userset_rewrite: {
             union: [
               :this,
-              {
-                relation: "parent",
-                computed_userset: {
-                  relation: "editor"
-                }
-              }
+              Rubac::TupleToUserset.new("parent", Rubac::ComputedUserset.new("editor"))
             ]
           }
         }
@@ -264,12 +248,15 @@ class CheckerTest < Minitest::Test
           userset_rewrite: {
             union: [
               :this,
-              {
-                relation: "parent",
-                computed_userset: {
-                  relation: "can_read"
-                }
-              }
+              Rubac::TupleToUserset.new("parent", Rubac::ComputedUserset.new("can_read"))
+            ]
+          }
+        },
+        can_write: {
+          userset_rewrite: {
+            union: [
+              :this,
+              Rubac::TupleToUserset.new("parent", Rubac::ComputedUserset.new("can_write"))
             ]
           }
         }
@@ -309,7 +296,8 @@ class CheckerTest < Minitest::Test
     ]
 
     invalid_tuple_keys = [
-      Rubac::TupleKey.new("user:bob", "can_read", "document:foo")
+      Rubac::TupleKey.new("user:bob", "can_read", "document:foo"),
+      Rubac::TupleKey.new("user:alice", "can_write", "document:foo")
     ]
 
     checker = Rubac::Checker.new(tuples, schema)
@@ -338,9 +326,7 @@ class CheckerTest < Minitest::Test
           userset_rewrite: {
             union: [
               :this,
-              {
-                relation: "editor"
-              }
+              Rubac::ComputedUserset.new("editor")
             ]
           }
         }

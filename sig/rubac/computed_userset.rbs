@@ -1,0 +1,3 @@
+class ComputedUserset
+  attr_reader relation: String
+end
