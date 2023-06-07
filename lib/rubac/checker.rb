@@ -2,41 +2,69 @@
 
 module Rubac
   class Checker
-    # @param [Rubac::Tuple] valid_tuples
-    def initialize(valid_tuples)
-      @tuples = valid_tuples
+    def initialize(tuples)
+      @tuples = tuples
     end
 
     # @param [Rubac::TupleKey] tuple_key
     # @return [bool]
     def check?(tuple_key)
-      matching_tuples = @tuples.filter do |tuple|
+      # Get initial set of tuples that match on the object and the relation
+      matches = direct_object_matches tuple_key
+
+      # Get additional tuples that match the object via relationships
+      matches.concat related_object_matches(tuple_key.object)
+
+      # Rewrite any tuples that specify usersets so that a tuple is created for each user in the set
+      rewrite_usersets(matches)
+
+      # Select tuples that match the user
+      matches.any? { |tuple| (tuple.user.is_wildcard? || tuple.user.is?(tuple_key.user)) && (tuple.relation == tuple_key.relation) }
+    end
+
+    private
+
+    def direct_object_matches(tuple_key)
+      @tuples.filter do |tuple|
         key_user = Rubac::User.new(tuple_key.user)
         tuple.object == tuple_key.object && tuple.relation == tuple_key.relation && (
           !key_user.is_userset? || key_user.relation == tuple.relation
         )
       end
+    end
 
-      return true if matching_tuples.any? do |tuple|
-        tuple.user.is_wildcard? || tuple.user.is?(tuple_key.user)
+    def related_object_matches(object, collected_tuples = [])
+      # Find tuples that match the latest key object
+      new_matches = @tuples.filter do |tuple|
+        tuple.object == object
       end
 
-      # Evaluate remaining relations - time to add a test requiring this to be recursive
-      @tuples.any? do |tuple|
-        if tuple.user.is_userset? && (tuple.object == tuple_key.object) && (tuple.relation == tuple_key.relation)
-          return @tuples.any? do |searched_tuple|
-            searched_tuple.user.is?(tuple_key.user) and tuple.user.qualified_id == searched_tuple.object and searched_tuple.relation == tuple.user.relation
-          end
-        end
-
-        if tuple.user.is?(tuple_key.user) && (tuple.relation == tuple_key.relation)
-          return true if @tuples.any? do |searched_tuple|
-            next if tuple == searched_tuple
-
-            searched_tuple.user.is?(tuple.object) && searched_tuple.object == tuple_key.object
-          end
-        end
+      # For each new match, investigate the tuples to see whether there are potential further matches
+      new_matches.each do |tuple|
+        related_object_matches(
+          tuple.user.qualified_id,
+          collected_tuples
+        )
       end
+
+      collected_tuples.concat new_matches
+    end
+
+    def rewrite_usersets(tuples)
+      tuples.map! do |subject_tuple|
+        next subject_tuple unless subject_tuple.user.is_userset?
+
+        rewritten_tuples = []
+        @tuples.each do |object_tuple|
+          if subject_tuple.user.qualified_id == object_tuple.object && subject_tuple.user.relation == object_tuple.relation
+            rewritten_tuples << Rubac::Tuple.new(object_tuple.user, subject_tuple.relation, subject_tuple.object)
+          end
+        end
+        rewritten_tuples.empty? ? subject_tuple : rewritten_tuples
+      end
+      tuples.flatten!
+
+      rewrite_usersets(tuples) if tuples.any? { |tuple| tuple.user.is_userset? }
     end
   end
 end

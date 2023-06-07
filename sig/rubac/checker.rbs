@@ -1,9 +1,15 @@
 module Rubac
   class Checker
-    @objects: Array[String]
-    @tuples: Array[Hash[String, String]]
-    @users: Array[String]
-
+    @tuples: Array[Rubac::Tuple]
     def check?: -> bool
+
+    private
+
+    def direct_object_matches: (TupleKey) -> Array[Tuple]
+
+    def related_object_matches: (String, Array[Tuple]?) -> Array[Tuple]
+
+    def rewrite_usersets: (Array[Tuple]) -> void
+
   end
 end
