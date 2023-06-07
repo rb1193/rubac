@@ -10,6 +10,10 @@ module Rubac
       @object = object
     end
 
+    def object_type
+      object.split(":").first
+    end
+
     def to_s
       "{ user: #{@user}, relation: #{@relation}, object: #{@object} }"
     end

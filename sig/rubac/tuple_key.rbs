@@ -3,5 +3,7 @@ module Rubac
     @object: String
     @relation: String
     @user: String
+
+    def object_type: -> String
   end
 end

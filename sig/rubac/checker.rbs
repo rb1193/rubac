@@ -1,15 +1,8 @@
 module Rubac
   class Checker
+    @schema: Hash[String, any]
     @tuples: Array[Rubac::Tuple]
-    def check?: -> bool
-
-    private
-
-    def direct_object_matches: (TupleKey) -> Array[Tuple]
-
-    def related_object_matches: (String, Array[Tuple]?) -> Array[Tuple]
-
-    def rewrite_usersets: (Array[Tuple]) -> void
-
+    def check?: (TupleKey) -> bool
+    def read: (String, String?, Array[Tuple])-> Array[Tuple]
   end
 end

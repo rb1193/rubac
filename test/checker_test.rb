@@ -18,6 +18,14 @@ class CheckerTest < Minitest::Test
   # introduce groups
   # principle of least permission (using blocklist?)
   def test_it_checks_if_a_user_can_access_an_object_via_direct_access
+    schema = {
+      user: {},
+      object: {
+        can_read: {},
+        can_write: {}
+      }
+    }
+
     tuples = [
       Rubac::Tuple.new(
         Rubac::User.new("user:foo"),
@@ -52,12 +60,48 @@ class CheckerTest < Minitest::Test
       Rubac::TupleKey.new("user:foo", "can_write", "object:1"),
       Rubac::TupleKey.new("user:foo", "can_read", "object:3"),
     ]
-    checker = Rubac::Checker.new(tuples)
-    assert_all_tuple_keys_are_valid(checker, valid_tuple_keys)
+
+    checker = Rubac::Checker.new(tuples, schema)
+
+    assert_all_tuple_keys_are_valid checker, valid_tuple_keys
     assert_all_tuple_keys_are_invalid(checker, invalid_tuple_keys)
   end
 
   def test_it_checks_if_a_user_has_a_relation_to_an_object_via_group_membership
+    schema = {
+      user: {},
+      group: {
+        member: {},
+        admin: {}
+      },
+      object:
+        {
+          can_write: {
+            userset_rewrite: {
+              union: [
+                :this,
+                {
+                  relation: "member"
+                },
+                {
+                  relation: "admin"
+                }
+              ]
+            }
+          },
+          can_delete: {
+            userset_rewrite: {
+              union: [
+                :this,
+                {
+                  relation: "admin"
+                }
+              ]
+            }
+          }
+        }
+    }
+
     tuples = [
       Rubac::Tuple.new(
         Rubac::User.new("user:alice"),
@@ -92,16 +136,40 @@ class CheckerTest < Minitest::Test
     ]
 
     invalid_tuple_keys = [
-      Rubac::TupleKey.new("user:bob", "can_write", "object:1")
+      Rubac::TupleKey.new("user:bob", "can_write", "object:1"),
+      Rubac::TupleKey.new("user:alice", "can_delete", "object:1")
     ]
 
-    checker = Rubac::Checker.new(tuples)
+    checker = Rubac::Checker.new(tuples, schema)
 
-    assert_all_tuple_keys_are_valid(checker, valid_tuple_keys)
-    assert_all_tuple_keys_are_invalid(checker, invalid_tuple_keys)
+    assert_all_tuple_keys_are_valid checker, valid_tuple_keys
+    assert_all_tuple_keys_are_invalid checker, invalid_tuple_keys
   end
 
   def test_it_checks_if_a_user_has_a_relation_to_an_object_via_another_object
+    schema = {
+      user: {},
+      folder: {
+        editor: {}
+      },
+      document: {
+        parent: {},
+        editor: {
+          userset_rewrite: {
+            union: [
+              :this,
+              {
+                relation: "parent",
+                computed_userset: {
+                  relation: "editor"
+                }
+              }
+            ]
+          }
+        }
+      }
+    }
+
     tuples = [
       Rubac::Tuple.new(
         Rubac::User.new("user:bob"),
@@ -119,12 +187,36 @@ class CheckerTest < Minitest::Test
       Rubac::TupleKey.new("user:bob", "editor", "document:foo")
     ]
 
-    checker = Rubac::Checker.new(tuples)
+    checker = Rubac::Checker.new(tuples, schema)
 
     assert_all_tuple_keys_are_valid(checker, valid_tuple_keys)
   end
 
   def test_it_checks_if_a_user_has_a_relation_to_an_object_via_more_than_one_other_object()
+    schema = {
+      user: {},
+      folder: {
+        parent: {},
+        editor: {}
+      },
+      document: {
+        parent: {},
+        editor: {
+          userset_rewrite: {
+            union: [
+              :this,
+              {
+                relation: "parent",
+                computed_userset: {
+                  relation: "editor"
+                }
+              }
+            ]
+          }
+        }
+      }
+    }
+
     tuples = [
       Rubac::Tuple.new(
         Rubac::User.new("user:bob"),
@@ -150,13 +242,40 @@ class CheckerTest < Minitest::Test
       Rubac::TupleKey.new("user:bob", "owner", "document:foo")
     ]
 
-    checker = Rubac::Checker.new(tuples)
+    checker = Rubac::Checker.new(tuples, schema)
 
     assert_all_tuple_keys_are_valid(checker, valid_tuple_keys)
     assert_all_tuple_keys_are_invalid(checker, invalid_tuple_keys)
   end
 
   def test_it_checks_if_a_user_has_a_relation_to_an_object_via_child_group_membership()
+    schema = {
+      user: {},
+      org: {
+        member: {}
+      },
+      folder: {
+        parent: {},
+        can_read: {}
+      },
+      document: {
+        parent: {},
+        can_read: {
+          userset_rewrite: {
+            union: [
+              :this,
+              {
+                relation: "parent",
+                computed_userset: {
+                  relation: "can_read"
+                }
+              }
+            ]
+          }
+        }
+      }
+    }
+
     tuples = [
       Rubac::Tuple.new(
         Rubac::User.new("user:alice"),
@@ -193,10 +312,44 @@ class CheckerTest < Minitest::Test
       Rubac::TupleKey.new("user:bob", "can_read", "document:foo")
     ]
 
-    checker = Rubac::Checker.new(tuples)
+    checker = Rubac::Checker.new(tuples, schema)
 
     assert_all_tuple_keys_are_valid(checker, valid_tuple_keys)
     assert_all_tuple_keys_are_invalid(checker, invalid_tuple_keys)
+  end
+
+  def test_it_applies_the_provided_schema_when_checking_direct_access
+    tuples = [
+      Rubac::Tuple.new(
+        Rubac::User.new("user:foo"),
+        "editor",
+        "object:1"
+      )
+    ]
+
+    valid_tuple_keys = [
+      Rubac::TupleKey.new("user:foo", "can_read", "object:1")
+    ]
+
+    schema = {
+      object: {
+        editor: {},
+        can_read: {
+          userset_rewrite: {
+            union: [
+              :this,
+              {
+                relation: "editor"
+              }
+            ]
+          }
+        }
+      }
+    }
+
+    checker = Rubac::Checker.new(tuples, schema)
+
+    assert_all_tuple_keys_are_valid checker, valid_tuple_keys
   end
 
   private
