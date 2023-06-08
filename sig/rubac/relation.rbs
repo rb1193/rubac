@@ -1,0 +1,5 @@
+module Rubac
+  class Relation
+    attr_reader userset_rewrite: UsersetRewrite?
+  end
+end

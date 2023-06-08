@@ -1,0 +1,6 @@
+module Rubac
+  class UsersetRewrite
+    attr_reader operation: :union | :intersection | :difference
+    attr_reader usersets: Array[:this | ComputedUserset | TupleToUserset]
+  end
+end

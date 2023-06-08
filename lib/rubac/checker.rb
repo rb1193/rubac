@@ -16,9 +16,10 @@ module Rubac
 
       return false unless relation
 
-      if relation.include?(:userset_rewrite)
-        if relation[:userset_rewrite].include? :union
-          relation[:userset_rewrite][:union].each do |child|
+      if relation.userset_rewrite?
+        case relation.userset_rewrite.operation
+        when :union
+          relation.userset_rewrite.usersets.each do |child|
             if child == :this
               matches.concat read tuple_key.object, tuple_key.relation
             elsif child.instance_of? ComputedUserset
@@ -28,7 +29,9 @@ module Rubac
               object_matches.each { |tuple| matches.concat read(tuple.object, child.computed_userset.relation) }
             end
           end
-        elsif relation[:userset_rewrite].include? :intersection
+        when :intersection
+          return false
+        else
           return false
         end
       else
@@ -36,7 +39,7 @@ module Rubac
       end
 
       # Select tuples that match the user
-      matches.any? { |tuple| (tuple.user.is_wildcard? || tuple.user.is?(tuple_key.user)) }
+      matches.any? { |tuple| (tuple.user.is_wildcard? && tuple.user.type == tuple_key.user_type) || tuple.user.is?(tuple_key.user) }
     end
 
     def read(object, relation, collected_tuples = [])
