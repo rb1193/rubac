@@ -1,5 +1,9 @@
 module Rubac
   class Relation
     attr_reader userset_rewrite: UsersetRewrite?
+
+    def matching_tuples: (Checker, TupleKey) -> Array[Tuple]
+
+    def userset_rewrite?: -> bool
   end
 end

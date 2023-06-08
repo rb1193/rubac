@@ -2,5 +2,7 @@ module Rubac
   class UsersetRewrite
     attr_reader operation: :union | :intersection | :difference
     attr_reader usersets: Array[:this | ComputedUserset | TupleToUserset]
+
+    def rewrite: (Checker, TupleKey)-> Array[Tuple]
   end
 end

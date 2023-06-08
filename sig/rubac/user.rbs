@@ -8,11 +8,11 @@ module Rubac
     attr_reader relation: String?
     attr_reader type: String?
 
-    def is: -> bool
+    def is?: (String) -> bool
 
-    def is_userset: -> bool
+    def is_userset?: -> bool
 
-    def is_wildcard: -> bool
+    def is_wildcard?: -> bool
 
     def qualified_id: -> String
   end

@@ -11,32 +11,11 @@ module Rubac
     def check? (tuple_key)
       object_relations = @schema[tuple_key.object_type.to_sym]
 
-      matches = []
       relation = object_relations[tuple_key.relation.to_sym]
 
       return false unless relation
 
-      if relation.userset_rewrite?
-        case relation.userset_rewrite.operation
-        when :union
-          relation.userset_rewrite.usersets.each do |child|
-            if child == :this
-              matches.concat read tuple_key.object, tuple_key.relation
-            elsif child.instance_of? ComputedUserset
-              matches.concat read tuple_key.object, child.relation
-            elsif child.instance_of? TupleToUserset
-              object_matches = read tuple_key.object, child.relation
-              object_matches.each { |tuple| matches.concat read(tuple.object, child.computed_userset.relation) }
-            end
-          end
-        when :intersection
-          return false
-        else
-          return false
-        end
-      else
-        matches.concat read tuple_key.object, tuple_key.relation
-      end
+      matches = relation.matching_tuples self, tuple_key
 
       # Select tuples that match the user
       matches.any? { |tuple| (tuple.user.is_wildcard? && tuple.user.type == tuple_key.user_type) || tuple.user.is?(tuple_key.user) }
