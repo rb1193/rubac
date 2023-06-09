@@ -9,5 +9,9 @@ module Rubac
       @relation = relation
       @object = object
     end
+
+    def ==(other)
+      other.class == self.class && other.object == object && other.relation == relation && other.user == user
+    end
   end
 end

@@ -2,8 +2,8 @@
 
 module Rubac
   class Checker
-    def initialize(tuples, schema)
-      @tuples = tuples
+    def initialize(schema)
+      @tuples = []
       @schema = schema
     end
 
@@ -18,7 +18,7 @@ module Rubac
       matches = relation.matching_tuples self, tuple_key
 
       # Select tuples that match the user
-      matches.any? { |tuple| (tuple.user.is_wildcard? && tuple.user.type == tuple_key.user_type) || tuple.user.is?(tuple_key.user) }
+      matches.any? { |tuple| (tuple.user.is_wildcard? && tuple.user.type == tuple_key.user_type) || tuple.user == tuple_key.user }
     end
 
     def read(object, relation, collected_tuples = [])
@@ -38,5 +38,18 @@ module Rubac
 
       collected_tuples.concat new_matches
     end
+
+    def write(tuple)
+      raise TupleExistsError if @tuples.any? { |existing_tuple| existing_tuple == tuple }
+
+      @tuples << tuple
+    end
+
+    def destroy(tuple)
+      raise MissingTupleError if @tuples.reject! { |existing_tuple| existing_tuple == tuple }.nil?
+    end
   end
+
+  class TupleExistsError < StandardError; end
+  class MissingTupleError < StandardError; end
 end

@@ -14,9 +14,9 @@ module Rubac
       computed_minuend_userset.filter do |minuend_tuple|
         computed_subtrahend_userset.none? do |subtrahend_tuple|
           if minuend_tuple.user.is_wildcard?
-            subtrahend_tuple.user.is? tuple_key.user
+            subtrahend_tuple.user == tuple_key.user
           else
-            minuend_tuple.user.is? subtrahend_tuple.user.to_s
+            minuend_tuple.user == subtrahend_tuple.user
           end
         end
       end

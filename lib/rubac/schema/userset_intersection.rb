@@ -13,7 +13,7 @@ module Rubac
 
       first_userset.filter do |candidate_tuple|
         computed_usersets.all? do |userset|
-          userset.any? { |tuple| tuple.user.is? candidate_tuple.user.to_s }
+          userset.any? { |tuple| tuple.user == candidate_tuple.user }
         end
       end
     end

@@ -69,7 +69,9 @@ class CheckerTest < Minitest::Test
       Tuple.new(User.new("user:mary"), "blocked", "document:public"),
     ]
 
-    @checker = Checker.new(tuples, schema)
+    @checker = Checker.new(schema)
+
+    tuples.each { |tuple| @checker.write tuple}
   end
 
   def teardown
@@ -113,5 +115,27 @@ class CheckerTest < Minitest::Test
   def test_blocklisting
     assert @checker.check? TupleKey.new("user:alice", "is_not_blocked", "document:public")
     assert !@checker.check?(TupleKey.new("user:mary", "is_not_blocked", "document:public"))
+  end
+
+  def test_writing_raises_an_error_if_tuple_already_exists
+    assert_raises TupleExistsError do
+      @checker.write(Tuple.new(User.new("user:alice"), "member", "org:a"))
+    end
+  end
+
+  def test_deleting_a_tuple
+    tuple = Tuple.new(User.new("user:ali"), "member", "org:a")
+    tuple_key = TupleKey.new("user:ali", "member", "org:a")
+    @checker.write tuple
+    assert @checker.check? tuple_key
+    @checker.destroy tuple
+    assert !@checker.check?(tuple_key)
+  end
+
+  def test_deleting_a_tuple_raises_an_error_if_the_tuple_does_not_exist
+    tuple = Tuple.new(User.new("user:sam"), "member", "org:a")
+    assert_raises MissingTupleError do
+      @checker.destroy tuple
+    end
   end
 end

@@ -25,8 +25,12 @@ module Rubac
       @id == "*"
     end
 
-    def is?(user)
-      to_s == user
+    def ==(other)
+      if other.instance_of? String
+        other == to_s
+      else
+        other.class == self.class && other.type == type && other.id == id && other.relation == relation
+      end
     end
 
     def to_s
