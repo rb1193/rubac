@@ -1,15 +1,17 @@
 # frozen_string_literal: true
 
-class Tuple
-  attr_reader :user, :relation, :object
+module Rubac
+  class Tuple
+    attr_reader :user, :relation, :object
 
-  def initialize(user, relation, object)
-    @user = user
-    @relation = relation
-    @object = object
-  end
+    def initialize(user, relation, object)
+      @user = user
+      @relation = relation
+      @object = object
+    end
 
-  def ==(other)
-    other.class == self.class && other.object == object && other.relation == relation && other.user == user
+    def ==(other)
+      other.class == self.class && other.object == object && other.relation == relation && other.user == user
+    end
   end
 end
